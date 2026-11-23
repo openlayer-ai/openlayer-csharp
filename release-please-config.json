@@ -6,6 +6,7 @@
   "include-v-in-tag": true,
   "include-component-in-tag": false,
   "versioning": "prerelease",
+  "initial-version": "0.1.0",
   "prerelease": false,
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": false,
