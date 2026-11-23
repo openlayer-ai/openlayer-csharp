@@ -1,0 +1,35 @@
+{
+  "descriptionHash": "6D163834064B3F91183DE7888367342BBB166C7871B7750B5786F342533FCCDE75A92D06A25AE3477EABAACB5229FCF2B819926E865E72545D678F957D006256",
+  "descriptionLocation": "../../../../openapi/_build/openapi.yaml",
+  "lockFileVersion": "1.0.0",
+  "kiotaVersion": "1.39.0",
+  "clientClassName": "OpenlayerApiClient",
+  "typeAccessModifier": "Public",
+  "clientNamespaceName": "Openlayer.Api",
+  "language": "CSharp",
+  "usesBackingStore": false,
+  "excludeBackwardCompatible": true,
+  "includeAdditionalData": true,
+  "disableSSLValidation": false,
+  "serializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Text.TextSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Form.FormSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Multipart.MultipartSerializationWriterFactory"
+  ],
+  "deserializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Text.TextParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Form.FormParseNodeFactory"
+  ],
+  "structuredMimeTypes": [
+    "application/json",
+    "text/plain;q=0.9",
+    "application/x-www-form-urlencoded;q=0.2",
+    "multipart/form-data;q=0.1"
+  ],
+  "includePatterns": [],
+  "excludePatterns": [],
+  "disabledValidationRules": [],
+  "allowedExternalOrigins": []
+}

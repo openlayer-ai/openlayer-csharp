@@ -1,0 +1,43 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build + test + parity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+
+      - name: Check formatting of hand-written code
+        run: dotnet format Openlayer.sln --verify-no-changes --exclude src/Openlayer/Generated
+
+      - name: Build
+        run: dotnet build Openlayer.sln -c Release -warnaserror
+
+      - name: Unit tests
+        run: dotnet test tests/Openlayer.Tests -c Release --no-build
+
+      - name: Parity with the Python SDK
+        run: scripts/parity
+
+      - name: Pack
+        run: dotnet pack src/Openlayer -c Release --no-build -o artifacts

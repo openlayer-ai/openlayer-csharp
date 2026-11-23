@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Checks that the C# SDK behaves like the Python SDK (the reference).
+#
+#   scripts/parity            both SDKs call a local recording server; fails if any
+#                             HTTP request (method, path+query, auth, body) differs
+#   scripts/parity --live     both SDKs call $OPENLAYER_BASE_URL with $OPENLAYER_API_KEY
+#                             (+ PROJECT_ID, PIPELINE_ID, WORKSPACE_ID); fails if any
+#                             result differs
+#
+# Needs python3 and the .NET SDK. Installs the latest `openlayer` from PyPI into
+# tests/Parity/.venv.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+P=tests/Parity
+OUT=$(mktemp -d)
+# One timestamp for both SDKs: identical requests, and inside the backend's 2-year window.
+export TIMESTAMP="${TIMESTAMP:-$(date +%s)}"
+
+[ -x "$P/.venv/bin/python" ] || python3 -m venv "$P/.venv"
+"$P/.venv/bin/pip" install -q --upgrade openlayer
+echo "Python SDK: openlayer $("$P/.venv/bin/pip" show openlayer | awk '/^Version/{print $2}')"
+dotnet build "$P" -c Release -v quiet -nologo >/dev/null
+
+run_py() { "$P/.venv/bin/python" -I "$P/parity.py"; }
+run_cs() { dotnet run --project "$P" -c Release --no-build; }
+
+if [ "${1:-}" = "--live" ]; then
+  : "${OPENLAYER_API_KEY:?set OPENLAYER_API_KEY}" "${OPENLAYER_BASE_URL:?set OPENLAYER_BASE_URL}"
+  # Each SDK creates its own project so the two creates don't collide.
+  suffix=$(date +%s)
+  PROJECT_NAME="parity-py-$suffix" run_py > "$OUT/py.json"
+  PROJECT_NAME="parity-cs-$suffix" run_cs > "$OUT/cs.json"
+  python3 - "$OUT/py.json" "$OUT/cs.json" <<'PY'
+import json, sys
+py, cs = (json.load(open(f)) for f in sys.argv[1:3])
+bad = 0
+for k in py:
+    a, b = py[k], cs.get(k)
+    if k == "projects.list":          # each SDK lists its own project name
+        a, b = len(a) if isinstance(a, list) else a, len(b) if isinstance(b, list) else b
+    ok = a == b
+    bad += not ok
+    print(f"{'MATCH' if ok else 'DIFF ':5}  {k:36} python={py[k]!s:28} csharp={cs.get(k)}")
+sys.exit(1 if bad else 0)
+PY
+  exit $?
+fi
+
+PORT_PY=${PARITY_PORT_PY:-4711}; PORT_CS=${PARITY_PORT_CS:-4712}
+python3 -I "$P/record_server.py" "$OUT/py.jsonl" "$PORT_PY" & s1=$!
+python3 -I "$P/record_server.py" "$OUT/cs.jsonl" "$PORT_CS" & s2=$!
+trap 'kill $s1 $s2 2>/dev/null || true' EXIT
+sleep 1
+OPENLAYER_BASE_URL="http://127.0.0.1:$PORT_PY" run_py >/dev/null
+OPENLAYER_BASE_URL="http://127.0.0.1:$PORT_CS" run_cs >/dev/null
+python3 - "$OUT/py.jsonl" "$OUT/cs.jsonl" <<'PY'
+import json, sys
+py, cs = ([json.loads(l) for l in open(f)] for f in sys.argv[1:3])
+bad = 0
+if len(py) != len(cs):
+    print(f"DIFF request count: python={len(py)} csharp={len(cs)}"); bad += 1
+for a, b in zip(py, cs):
+    ok = a == b
+    bad += not ok
+    print(f"{'SAME' if ok else 'DIFF'}  {a['method']:6} {a['path']}")
+    if not ok:
+        for k in a:
+            if a[k] != b.get(k):
+                print(f"        {k}:\n          python={a[k]}\n          csharp={b.get(k)}")
+sys.exit(1 if bad else 0)
+PY

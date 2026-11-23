@@ -1,0 +1,53 @@
+# Triggered when a GitHub release is published on the production repo.
+# Run it by hand to re-publish if a release upload failed.
+#
+# Uses nuget.org Trusted Publishing (GitHub OIDC): no stored API key. The
+# nuget.org policy must match: owner openlayer-ai, repository openlayer-csharp,
+# workflow publish-nuget.yml. NUGET_USER (a repository *variable*) is the
+# nuget.org profile name of the account that created the policy.
+name: Publish NuGet
+on:
+  workflow_dispatch: {}
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for nuget.org Trusted Publishing
+
+jobs:
+  publish:
+    if: github.repository == 'openlayer-ai/openlayer-csharp'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Check release environment
+        env:
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          if [ -z "${NUGET_USER:-}" ]; then
+            echo "::error::Set the NUGET_USER repository variable (nuget.org profile name that owns the Trusted Publishing policy)."; exit 1
+          fi
+
+      - name: Pack
+        run: dotnet pack src/Openlayer -c Release -o artifacts
+
+      - name: Log in to nuget.org (OIDC)
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate

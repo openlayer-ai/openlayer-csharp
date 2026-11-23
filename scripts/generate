@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Regenerates src/Openlayer/Generated from the bundled OpenAPI spec with Kiota.
+#
+#   scripts/generate <path-to-openapi.yaml>
+#
+# Everything under src/Openlayer/Generated is overwritten on every run — do not
+# edit it by hand. Hand-written code lives everywhere else (src/Openlayer/*.cs,
+# tests/, examples/). In CI this runs from openlayer-public-api's
+# csharp-generate.yml on every spec change; run it locally to inspect output.
+set -euo pipefail
+
+SPEC="${1:?usage: scripts/generate <path-to-openapi.yaml>}"
+SPEC="$(cd "$(dirname "$SPEC")" && pwd)/$(basename "$SPEC")"
+cd "$(dirname "$0")/.."
+
+dotnet tool restore >/dev/null
+dotnet kiota generate \
+  --language CSharp \
+  --class-name OpenlayerApiClient \
+  --namespace-name Openlayer.Api \
+  --openapi "$SPEC" \
+  --output src/Openlayer/Generated \
+  --exclude-backward-compatible \
+  --clean-output \
+  --log-level Warning
+
+echo "Generated $(find src/Openlayer/Generated -name '*.cs' | wc -l | tr -d ' ') files into src/Openlayer/Generated"
