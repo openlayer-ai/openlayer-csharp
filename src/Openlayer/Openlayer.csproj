@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;netstandard2.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Openlayer</RootNamespace>
+    <!-- Generated code (src/Openlayer/Generated) is not documented member-by-member. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <PackageId>Openlayer</PackageId>
+    <Version>0.0.0</Version> <!-- x-release-please-version -->
+    <Authors>Openlayer</Authors>
+    <Company>Openlayer</Company>
+    <Description>The official C# / .NET library for the Openlayer API, the Evaluation Platform for AI.</Description>
+    <PackageTags>openlayer;llm;evaluation;observability;ai</PackageTags>
+    <PackageProjectUrl>https://github.com/openlayer-ai/openlayer-csharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/openlayer-ai/openlayer-csharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.2.0" />
+  </ItemGroup>
+
+</Project>
