@@ -10,7 +10,7 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
 
     <PackageId>Openlayer</PackageId>
-    <Version>0.0.0</Version> <!-- x-release-please-version -->
+    <Version>0.1.0</Version> <!-- x-release-please-version -->
     <Authors>Openlayer</Authors>
     <Company>Openlayer</Company>
     <Description>The official C# / .NET library for the Openlayer API, the Evaluation Platform for AI.</Description>
